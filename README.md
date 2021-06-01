@@ -1,1 +1,1 @@
-# ts_ui_test_platform
+# Test Service-UI Test Platform for DevOps
