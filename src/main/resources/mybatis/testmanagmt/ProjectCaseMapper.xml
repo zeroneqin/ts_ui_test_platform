@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luckyframe.project.testmanagmt.projectCase.mapper.ProjectCaseMapper">
+    
+    <resultMap type="ProjectCase" id="ProjectCaseResult">
+        <result property="caseId"    column="case_id"    />
+        <result property="caseSerialNumber"    column="case_serial_number"    />
+        <result property="caseSign"    column="case_sign"    />
+        <result property="caseName"    column="case_name"    />
+        <result property="projectId"    column="project_id"    />
+        <result property="moduleId"    column="module_id"    />
+        <result property="caseType"    column="case_type"    />
+        <result property="failcontinue"    column="failcontinue"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <association property="project"  column="project_id" javaType="Project" resultMap="ProjectResult" />
+        <association property="projectCaseModule"  column="module_id" javaType="ProjectCaseModule" resultMap="ProjectCaseModuleResult" />
+    </resultMap>
+    
+    <resultMap type="Project" id="ProjectResult">
+        <id property="projectId"    column="project_id"    />
+        <result property="projectName"    column="project_name"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="projectSign"    column="project_sign"    />
+    </resultMap>
+	
+	<resultMap type="ProjectCaseModule" id="ProjectCaseModuleResult">
+        <id property="moduleId"    column="module_id"    />
+        <result property="moduleName"    column="module_name"    />
+        <result property="projectId"    column="project_id"    />
+        <result property="parentId"    column="parent_id"    />
+        <result property="ancestors"    column="ancestors"    />
+        <result property="orderNum"    column="order_num"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+    
+	<sql id="selectProjectCaseVo">
+        select pc.case_id, pc.case_serial_number, pc.case_sign, pc.case_name, pc.project_id, pc.module_id, pc.case_type, pc.failcontinue, pc.create_by, pc.create_time, pc.update_by, pc.update_time, pc.remark,
+        sp.project_name,sp.dept_id,sp.project_sign,
+        pcm.module_name 
+        from project_case pc 
+        left join sys_project sp on pc.project_id = sp.project_id 
+        left join project_case_module pcm on pc.module_id = pcm.module_id 
+    </sql>
+	
+    <select id="selectProjectCaseList" parameterType="ProjectCase" resultMap="ProjectCaseResult">
+        <include refid="selectProjectCaseVo"/>
+        <where>  
+            <if test="caseId != null "> and pc.case_id = #{caseId}</if>
+             <if test="caseSerialNumber != null "> and pc.case_serial_number = #{caseSerialNumber}</if>
+             <if test="caseSign != null  and caseSign != '' "> and pc.case_sign like concat('%', #{caseSign}, '%')</if>
+             <if test="caseName != null  and caseName != '' "> and pc.case_name like concat('%', #{caseName}, '%')</if>
+             <if test="projectId != null "> and pc.project_id = #{projectId}</if>
+             <if test="moduleId != null "> and (pc.module_id = #{moduleId} or pc.module_id in (select module_id from project_case_module where ancestors like concat('%,', #{moduleId}, ',%') or ancestors like concat('%,', #{moduleId}, '')))</if>
+             <if test="caseType != null "> and pc.case_type = #{caseType}</if>
+             <if test="failcontinue != null "> and pc.failcontinue = #{failcontinue}</if>
+             <if test="createBy != null  and createBy != '' "> and pc.create_by = #{createBy}</if>
+             <if test="createTime != null "> and pc.create_time = #{createTime}</if>
+             <if test="updateBy != null  and updateBy != '' "> and pc.update_by = #{updateBy}</if>
+             <if test="updateTime != null "> and pc.update_time = #{updateTime}</if>
+             <if test="remark != null  and remark != '' "> and pc.remark  like concat('%', #{remark}, '%')</if>
+         </where>
+         order by pc.case_id desc
+    </select>
+    
+    <select id="selectProjectCaseListForPlan" parameterType="ProjectCase" resultMap="ProjectCaseResult">
+        select pc.case_id, pc.case_serial_number, pc.case_sign, pc.case_name, pc.project_id, pc.module_id, pc.case_type, pc.failcontinue, pc.create_by, pc.create_time, pc.update_by, pc.update_time, pc.remark,
+        pcm.module_name,
+        ppc.plan_case_id, ppc.plan_id, ppc.priority  
+        from project_case pc 
+        left join project_case_module pcm on pc.module_id = pcm.module_id 
+        left join project_plan_case ppc on pc.case_id = ppc.case_id
+        <where>  
+            <if test="caseId != null "> and pc.case_id = #{caseId}</if>
+            <if test="caseSerialNumber != null "> and pc.case_serial_number = #{caseSerialNumber}</if>
+            <if test="caseSign != null  and caseSign != '' "> and pc.case_sign like concat('%', #{caseSign}, '%')</if>
+            <if test="caseName != null  and caseName != '' "> and pc.case_name like concat('%', #{caseName}, '%')</if>
+            <if test="projectId != null "> and pc.project_id = #{projectId}</if>
+            <if test="moduleId != null "> and pc.module_id = #{moduleId} or pc.module_id in (select module_id from project_case_module where ancestors like concat('%,', #{moduleId}, ',%') or ancestors like concat('%,', #{moduleId}, ''))</if>
+            <if test="caseType != null "> and pc.case_type = #{caseType}</if>
+            <if test="failcontinue != null "> and pc.failcontinue = #{failcontinue}</if>
+            <if test="createBy != null  and createBy != '' "> and pc.create_by = #{createBy}</if>
+            <if test="createTime != null "> and pc.create_time = #{createTime}</if>
+            <if test="updateBy != null  and updateBy != '' "> and pc.update_by = #{updateBy}</if>
+            <if test="updateTime != null "> and pc.update_time = #{updateTime}</if>
+            <if test="remark != null  and remark != '' "> and pc.remark  like concat('%', #{remark}, '%')</if>
+            <if test="planId != null and flag == true"> and ppc.plan_id = #{planId}</if>
+         </where>
+         order by ppc.priority asc,pc.case_id desc
+    </select>
+    
+    <select id="selectProjectCaseById" parameterType="Integer" resultMap="ProjectCaseResult">
+        <include refid="selectProjectCaseVo"/>
+        where pc.case_id = #{caseId}
+    </select>
+    
+    <select id="selectProjectCaseByCaseSign" parameterType="String" resultMap="ProjectCaseResult">
+        <include refid="selectProjectCaseVo"/>
+        where pc.case_sign = #{caseSign}
+    </select>
+    
+    <select id="selectMaxCaseSerialNumberByProjectId" parameterType="Integer" resultType="Integer">
+		select IFNULL(MAX(case_serial_number),0) from project_case where project_id=#{project_id}
+	</select>
+    
+    <select id="checkProjectCaseNameUnique" parameterType="ProjectCase" resultMap="ProjectCaseResult">
+        <include refid="selectProjectCaseVo"/>
+        <where>
+          <if test="caseName != null  and caseName != '' "> and pc.case_name = #{caseName}</if>
+          <if test="projectId != null and projectId != 0"> and pc.project_id = #{projectId}</if>
+        </where>
+	</select>
+        
+    <insert id="insertProjectCase" parameterType="ProjectCase" useGeneratedKeys="true" keyProperty="caseId">
+        insert into project_case
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="caseSerialNumber != null  ">case_serial_number,</if>
+			<if test="caseSign != null  and caseSign != ''  ">case_sign,</if>
+			<if test="caseName != null  and caseName != ''  ">case_name,</if>
+			<if test="projectId != null  ">project_id,</if>
+			<if test="moduleId != null  ">module_id,</if>
+			<if test="caseType != null  ">case_type,</if>
+			<if test="failcontinue != null  ">failcontinue,</if>
+			<if test="createBy != null  and createBy != ''  ">create_by,</if>
+			<if test="createTime != null  ">create_time,</if>
+			<if test="updateBy != null  and updateBy != ''  ">update_by,</if>
+			<if test="updateTime != null  ">update_time,</if>
+			<if test="remark != null  and remark != ''  ">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="caseSerialNumber != null  ">#{caseSerialNumber},</if>
+			<if test="caseSign != null  and caseSign != ''  ">#{caseSign},</if>
+			<if test="caseName != null  and caseName != ''  ">#{caseName},</if>
+			<if test="projectId != null  ">#{projectId},</if>
+			<if test="moduleId != null  ">#{moduleId},</if>
+			<if test="caseType != null  ">#{caseType},</if>
+			<if test="failcontinue != null  ">#{failcontinue},</if>
+			<if test="createBy != null  and createBy != ''  ">#{createBy},</if>
+			<if test="createTime != null  ">#{createTime},</if>
+			<if test="updateBy != null  and updateBy != ''  ">#{updateBy},</if>
+			<if test="updateTime != null  ">#{updateTime},</if>
+			<if test="remark != null  and remark != ''  ">#{remark},</if>
+         </trim>
+    </insert>
+	 
+    <update id="updateProjectCase" parameterType="ProjectCase">
+        update project_case
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="caseSerialNumber != null  ">case_serial_number = #{caseSerialNumber},</if>
+            <if test="caseSign != null  and caseSign != ''  ">case_sign = #{caseSign},</if>
+            <if test="caseName != null  and caseName != ''  ">case_name = #{caseName},</if>
+            <if test="projectId != null  ">project_id = #{projectId},</if>
+            <if test="moduleId != null  ">module_id = #{moduleId},</if>
+            <if test="caseType != null  ">case_type = #{caseType},</if>
+            <if test="failcontinue != null  ">failcontinue = #{failcontinue},</if>
+            <if test="createBy != null  and createBy != ''  ">create_by = #{createBy},</if>
+            <if test="createTime != null  ">create_time = #{createTime},</if>
+            <if test="updateBy != null  and updateBy != ''  ">update_by = #{updateBy},</if>
+            <if test="updateTime != null  ">update_time = #{updateTime},</if>
+            <if test="remark != null  ">remark = #{remark},</if>
+        </trim>
+        where case_id = #{caseId}
+    </update>
+
+	<delete id="deleteProjectCaseById" parameterType="Integer">
+        delete from project_case where case_id = #{caseId}
+    </delete>
+	
+    <delete id="deleteProjectCaseByIds" parameterType="String">
+        delete from project_case where case_id in 
+        <foreach item="caseId" collection="array" open="(" separator="," close=")">
+            #{caseId}
+        </foreach>
+    </delete>
+    
+    <select id="selectProjectCaseCountByProjectId" parameterType="Integer" resultType="Integer">
+		select count(1) from project_case where project_id=#{project_id}
+	</select>
+	
+	<select id="selectProjectCaseCountByModuleId" parameterType="Integer" resultType="Integer">
+		select count(1) from project_case where module_id=#{module_id}
+	</select>
+	
+	<select id="selectProjectCaseCount" resultType="Integer">
+		select count(1) from project_case
+	</select>
+	
+	<select id="selectProjectCaseCountForThirtyDays" parameterType="String" resultType="Integer">
+		select count(1) from project_case where date_format(update_time,'%y%m%d') &gt;= date_format(#{updateTime},'%y%m%d')
+	</select>
+</mapper>
